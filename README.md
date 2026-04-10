@@ -25,10 +25,11 @@ Manage everything from the system tray by clicking the Wemp icon.
 
 - **User-friendly Interface**: Designed for both beginners and experienced users.
 - **Multi-Version PHP Support**: Switch between different PHP versions easily from the menu.
-- **Regular Updates**: Ensures you have the latest versions of all services.
+- **Automatic Updates**: Ensures you always have the latest versions of all services.
 - **Database Management**: Utilizes [phpMyAdmin](https://www.phpmyadmin.net) for easy database management.
 - **Configuration Monitoring**: Automatically restarts services upon configuration changes.
-- **Error Logging**: Tracks errors in `error.log` for debugging.
+- **PATH Integration**: Add service executables to your PATH for command-line access.
+- **Error Logging**: Tracks errors in a log file for debugging.
 - **Autostart Option**: Start Wemp automatically at system startup.
 
 ## System Requirements
@@ -77,7 +78,7 @@ Yes! Wemp supports multiple PHP versions. To change your PHP version:
 Wemp only shows officially supported PHP versions. If you need to add a custom PHP version:
 
 1. Hover over **Wemp** in the menu and click **Edit Settings**
-2. Create a folder for your PHP version in the PHP directory (e.g., `C:\Wemp\php\php-8.x`)
+2. Create a folder for your PHP version in the services directory (e.g., `C:\Wemp\php-8.3`)
 3. Add the version to the `installedVersions` array in the settings
 4. Restart Wemp to see your custom version in the menu
 
@@ -91,7 +92,7 @@ This is a Windows behavior caused by how Squirrel (our updater) works. Each upda
 
 To move your services folder to a different location:
 
-1. Stop Wemp completely (right-click tray icon → Exit)
+1. Stop Wemp completely (right-click tray icon → **Quit Wemp**)
 2. Manually move your services folder (e.g., from `C:\Wemp` to `D:\Development\Wemp`)
 3. Start Wemp again
 4. When prompted, select your new services folder location
@@ -101,8 +102,6 @@ Wemp doesn't handle folder moves automatically to prevent unexpected failures or
 ## Development
 
 Want to contribute? Here's how to set up the development environment:
-
-**Note**: The codebase is continuously updated to reference the latest service versions available at [https://electronfriends.org/api/wemp/versions.json](https://electronfriends.org/api/wemp/versions.json).
 
 1. Clone the repository:
 
@@ -114,19 +113,22 @@ Want to contribute? Here's how to set up the development environment:
 2. Install dependencies:
 
    ```bash
-   yarn install
+   npm ci
    ```
 
 3. Start the development environment:
 
    ```bash
-   yarn start
+   npm start
    ```
 
 4. To build the installer:
+
    ```bash
-   yarn make
+   npm run make
    ```
+
+> Service versions are fetched at runtime from [https://electronfriends.org/api/wemp/versions.json](https://electronfriends.org/api/wemp/versions.json).
 
 ## Thanks to
 
