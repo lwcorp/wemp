@@ -1,0 +1,61 @@
+name: Bump and release
+
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: Version bump type
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  quality:
+    uses: ./.github/workflows/code-quality.yml
+
+  release:
+    needs: quality
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+        shell: bash
+
+      - name: Bump version
+        id: version
+        run: |
+          npm version ${{ inputs.type }} --no-git-tag-version
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Commit and push
+        run: |
+          git add package.json package-lock.json
+          git commit -m "Bump version to ${{ steps.version.outputs.version }}"
+          git push origin main
+        shell: bash
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run publish
