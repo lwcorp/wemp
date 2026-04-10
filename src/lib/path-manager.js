@@ -12,10 +12,14 @@ import logger from './logger.js';
  */
 function executePathCommand(command) {
   return new Promise((resolve, reject) => {
-    const powershell = spawn('powershell.exe', ['-NoProfile', '-Command', command], {
-      windowsHide: true,
-      stdio: 'pipe',
-    });
+    const powershell = spawn(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', command],
+      {
+        windowsHide: true,
+        stdio: 'pipe',
+      }
+    );
 
     let output = '';
     let error = '';
@@ -32,7 +36,7 @@ function executePathCommand(command) {
       if (code === 0) {
         resolve(output.trim());
       } else {
-        reject(new Error(`PowerShell command failed: ${error || 'Unknown error'}`));
+        reject(new Error(`PowerShell command failed: ${error || output || 'Unknown error'}`));
       }
     });
 
@@ -81,17 +85,29 @@ async function setUserPath(paths) {
 }
 
 /**
- * Gets the service paths that should be added to PATH
+ * Normalizes a path for comparison by lowercasing and stripping any trailing separator.
+ * @param {string} p
+ * @returns {string}
+ * @private
+ */
+function normalizePath(p) {
+  return p.replace(/[/\\]+$/, '').toLowerCase();
+}
+
+/**
+ * Gets the paths that should be in PATH for services that have an executable.
  * @returns {string[]} Array of service executable paths
  */
 export function getServicePaths() {
   const servicesPath = config.paths.services;
 
-  return Object.entries(config.services).map(([serviceId, svc]) =>
-    svc.executablePath
-      ? path.join(servicesPath, serviceId, svc.executablePath)
-      : path.join(servicesPath, serviceId)
-  );
+  return Object.entries(config.services)
+    .filter(([, svc]) => svc.executable)
+    .map(([serviceId, svc]) =>
+      svc.executablePath
+        ? path.join(servicesPath, serviceId, svc.executablePath)
+        : path.join(servicesPath, serviceId)
+    );
 }
 
 /**
@@ -104,7 +120,7 @@ export async function areServicePathsInPath() {
     const servicePaths = getServicePaths();
 
     return servicePaths.every(servicePath =>
-      currentPath.some(p => p.toLowerCase() === servicePath.toLowerCase())
+      currentPath.some(p => normalizePath(p) === normalizePath(servicePath))
     );
   } catch (error) {
     logger.error('Failed to check if service paths are in PATH:', error);
@@ -124,7 +140,7 @@ export async function addServicePathsToPath() {
 
     // Add paths that don't already exist
     servicePaths.forEach(servicePath => {
-      if (!newPaths.some(p => p.toLowerCase() === servicePath.toLowerCase())) {
+      if (!newPaths.some(p => normalizePath(p) === normalizePath(servicePath))) {
         newPaths.push(servicePath);
       }
     });
@@ -146,9 +162,9 @@ export async function removeServicePathsFromPath() {
     const currentPath = await getUserPath();
     const servicePaths = getServicePaths();
 
-    // Filter out service paths (case-insensitive)
+    // Filter out service paths (case-insensitive, trailing-separator-tolerant)
     const newPaths = currentPath.filter(
-      p => !servicePaths.some(sp => sp.toLowerCase() === p.toLowerCase())
+      p => !servicePaths.some(sp => normalizePath(sp) === normalizePath(p))
     );
 
     await setUserPath(newPaths);
