@@ -1,19 +1,29 @@
-name: Release app
+name: Bump and release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      type:
+        description: Version bump type
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
-  code-quality:
+  quality:
     uses: ./.github/workflows/code-quality.yml
 
-  build:
-    needs: code-quality
+  release:
+    needs: quality
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
-      - name: GitHub checkout
+      - name: Checkout
         uses: actions/checkout@v6
 
       - name: Setup Node.js
@@ -22,32 +32,30 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Get version
-        id: package_version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Check if tag exists
-        id: check_tag
+      - name: Configure Git
         run: |
-          if git ls-remote --tags origin | grep -q "refs/tags/v${{ steps.package_version.outputs.version }}"; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
         shell: bash
 
-      - name: Skip release
-        if: steps.check_tag.outputs.exists == 'true'
-        run: echo "::notice::Release v${{ steps.package_version.outputs.version }} already exists, skipping build and publish"
+      - name: Bump version
+        id: version
+        run: |
+          npm version ${{ inputs.type }} --no-git-tag-version
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Commit and push
+        run: |
+          git add package.json package-lock.json
+          git commit -m "Bump version to ${{ steps.version.outputs.version }}"
+          git push origin main
         shell: bash
 
       - name: Install dependencies
-        if: steps.check_tag.outputs.exists == 'false'
         run: npm ci
 
-      - name: Publish app
-        if: steps.check_tag.outputs.exists == 'false'
+      - name: Publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run publish
