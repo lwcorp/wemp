@@ -1,20 +1,17 @@
 # Logs
 *.log
-yarn-debug.log*
-yarn-error.log*
+npm-debug.log*
 
 # Runtime data
 *.pid
 *.seed
 *.pid.lock
-.DS_Store
 
 # Dependencies
 node_modules/
 
 # Environment variables
 .env
-.env.test
 
 # Build outputs
 .vite/
