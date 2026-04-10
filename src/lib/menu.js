@@ -173,7 +173,7 @@ async function buildMenu() {
           label: service.name,
           icon: serviceIcon,
           submenu: [
-            { label: `${service.name} ${version}`, icon: serviceIcon, enabled: false },
+            { label: `${service.name} ${serviceVersion}`, icon: serviceIcon, enabled: false },
             { type: 'separator' },
             {
               label: 'Open in Browser',
