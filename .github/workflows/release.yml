@@ -14,22 +14,23 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: GitHub checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: yarn
+          cache: npm
 
       - name: Get version
         id: package_version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Check if tag exists
         id: check_tag
         run: |
-          if git ls-remote --tags origin | findstr /C:"refs/tags/v${{ steps.package_version.outputs.version }}" >nul; then
+          if git ls-remote --tags origin | grep -q "refs/tags/v${{ steps.package_version.outputs.version }}"; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
@@ -39,13 +40,14 @@ jobs:
       - name: Skip release
         if: steps.check_tag.outputs.exists == 'true'
         run: echo "::notice::Release v${{ steps.package_version.outputs.version }} already exists, skipping build and publish"
+        shell: bash
 
       - name: Install dependencies
         if: steps.check_tag.outputs.exists == 'false'
-        run: yarn install
+        run: npm ci
 
       - name: Publish app
         if: steps.check_tag.outputs.exists == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn run publish
+        run: npm run publish
