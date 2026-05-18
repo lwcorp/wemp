@@ -39,10 +39,12 @@ Manage everything from the system tray by clicking the Wemp icon.
 
 ## Installation
 
-1. Download and run the latest Wemp installer from the [Releases](https://github.com/electronfriends/wemp/releases/latest) page.
-2. Choose the installation path where the services will be installed (default is `C:\Wemp`).
-3. Required services will be downloaded and configured automatically.
-4. Access your web server at http://localhost or manage your database at http://localhost/phpmyadmin.
+1. The following depends on how you wish to install:
+    1. For non portable use - download and run the latest Wemp installer from the [Releases](https://github.com/electronfriends/wemp/releases/latest) page.
+    1. For portable use - download the nupkg archive from the [Releases](https://github.com/electronfriends/wemp/releases/latest) page, and extract its `lib\net45` sub-folder into a folder of your choice.
+1. Choose the installation path where the services will be installed (default is `C:\Wemp`).
+1. Required services will be downloaded and configured automatically.
+1. Access your web server at http://localhost or manage your database at http://localhost/phpmyadmin.
 
 ## FAQs
 
@@ -54,7 +56,7 @@ No. Uninstalling Wemp only removes the application itself. Your services, all co
 - Manually manage your services if needed
 - Keep your development environment even without Wemp
 
-If you want to completely remove everything, you'll need to manually delete the services folder (default: `C:\Wemp`) after uninstalling the application.
+If you want to completely remove everything, you'll need to manually delete the services folder (default: `C:\Wemp`), and `%ADDATA%\Wemp`, after uninstalling the application.
 
 ### How can I use PHP, MariaDB, and Nginx from the command line?
 
